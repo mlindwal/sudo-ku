@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Play Sudoku in the browser with difficulty levels, a timer and pencil notes.">
+  <title>Sudo-ku</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <h1>Sudo-ku</h1>
+      <div class="controls">
+        <label class="visually-hidden" for="difficulty">Difficulty</label>
+        <select id="difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+          <option value="expert">Expert</option>
+        </select>
+        <button id="new-game" type="button">New game</button>
+      </div>
+    </header>
+
+    <div class="status">
+      <span id="difficulty-label" class="badge"></span>
+      <div class="clock">
+        <span id="timer" aria-label="Elapsed time">0:00</span>
+        <button id="pause" type="button" class="icon-button" aria-label="Pause">❚❚</button>
+      </div>
+    </div>
+
+    <div class="board-wrap">
+      <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+      <div id="overlay" class="overlay" hidden>
+        <p id="overlay-title" class="overlay-title"></p>
+        <p id="overlay-text"></p>
+        <button id="overlay-button" type="button"></button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="undo" type="button" class="action">
+        <span class="action-icon" aria-hidden="true">↶</span>Undo
+      </button>
+      <button id="erase" type="button" class="action">
+        <span class="action-icon" aria-hidden="true">⌫</span>Erase
+      </button>
+      <button id="notes" type="button" class="action" aria-pressed="false">
+        <span class="action-icon" aria-hidden="true">✎</span>Notes: <span id="notes-state">Off</span>
+      </button>
+    </div>
+
+    <div id="pad" class="pad" aria-label="Number pad"></div>
+
+    <p class="help">
+      Keyboard: <kbd>1</kbd>–<kbd>9</kbd> fill in, <kbd>Shift</kbd>+digit adds a note,
+      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes,
+      <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.
+    </p>
+  </main>
+
+  <script src="js/sudoku.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
