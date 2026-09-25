@@ -51,8 +51,8 @@ file system, because browsers only run service workers over `http(s)`.
   You lose when you reach the limit: 5 mistakes on Easy and Medium, 3 on Hard
   and Expert. You can then retry the same puzzle or start a new game. Notes
   never count as mistakes.
-- **Sound effects** for correct and wrong digits, and a jingle when you win
-  or lose. They're synthesized in the browser, so there are no audio files.
+- **Sound effects** for correct and wrong digits, a soft tick when you add or
+  remove a note, and a jingle when you win or lose. They're synthesized in the browser, so there are no audio files.
   The mute button (or `M`) silences them, and the setting is remembered.
 - **Hints.** Press **Hint** (or `H`) for the next logical move, explained in
   plain words, with the cells it involves highlighted. **Fill in** places the

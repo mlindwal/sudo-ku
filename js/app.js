@@ -431,6 +431,7 @@
       if (state.values[i]) return;
       snapshot();
       state.notes[i] ^= bit;
+      Sound.play(state.notes[i] & bit ? 'noteAdd' : 'noteRemove');
     } else {
       snapshot();
       if (state.values[i] === d) {
@@ -467,8 +468,12 @@
     if (state.puzzle[i] || (!state.values[i] && !state.notes[i])) return;
     snapshot();
     // Erasing a digit reveals any notes kept under it; erasing again clears them.
-    if (state.values[i]) state.values[i] = 0;
-    else state.notes[i] = 0;
+    if (state.values[i]) {
+      state.values[i] = 0;
+    } else {
+      state.notes[i] = 0;
+      Sound.play('noteRemove');
+    }
     render();
   }
 

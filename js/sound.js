@@ -55,6 +55,14 @@
       tone(E5, 0, 0.12, { glideTo: G5 });
       tone(C6, 0.05, 0.14, { volume: 0.25 });
     },
+    // A soft, short tick that lifts: a pencil mark going on.
+    noteAdd() {
+      tone(1760, 0, 0.05, { volume: 0.22, glideTo: 2090 });
+    },
+    // The same tick falling: a pencil mark coming off.
+    noteRemove() {
+      tone(1570, 0, 0.05, { volume: 0.18, glideTo: 1180 });
+    },
     // A low, buzzy downward thud.
     wrong() {
       tone(200, 0, 0.25, { type: 'square', volume: 0.18, glideTo: 110 });
