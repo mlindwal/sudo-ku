@@ -1,6 +1,6 @@
 /*
  * Sudoku game UI: board rendering, input (keyboard, mouse, touch),
- * notes mode, undo, timer and difficulty selection.
+ * notes mode, undo, timer, pausing and difficulty selection.
  */
 (function () {
   'use strict';
@@ -11,21 +11,23 @@
   const boardEl = $('board');
   const padEl = $('pad');
   const timerEl = $('timer');
-  const difficultyEl = $('difficulty');
   const overlayEl = $('overlay');
+  const overlayButtonsEl = $('overlay-buttons');
 
   const state = {
+    hasGame: false,    // false until the first difficulty is chosen
     difficulty: 'easy',
-    puzzle: [],        // clues, 0 for empty
+    puzzle: new Array(81).fill(0), // clues, 0 for empty
     solution: [],
-    values: [],        // current digits, including clues
-    notes: [],         // 9-bit mask of pencil marks per cell
+    values: new Array(81).fill(0), // current digits, including clues
+    notes: new Array(81).fill(0),  // 9-bit mask of pencil marks per cell
     selected: -1,
     notesMode: false,
     history: [],
     elapsed: 0,        // ms accumulated before `startedAt`
     startedAt: null,   // timestamp while the clock runs, else null
     paused: false,
+    choosing: false,   // the difficulty picker is open
     solved: false,
   };
 
@@ -45,13 +47,15 @@
 
   const elapsed = () => state.elapsed + (state.startedAt ? Date.now() - state.startedAt : 0);
 
-  function startClock() {
-    if (!state.startedAt) state.startedAt = Date.now();
-  }
-
-  function stopClock() {
-    state.elapsed = elapsed();
-    state.startedAt = null;
+  // The clock runs only while a game is actually being played.
+  function syncClock() {
+    const running = state.hasGame && !state.paused && !state.choosing && !state.solved;
+    if (running && !state.startedAt) {
+      state.startedAt = Date.now();
+    } else if (!running && state.startedAt) {
+      state.elapsed = elapsed();
+      state.startedAt = null;
+    }
   }
 
   function formatTime(ms) {
@@ -130,34 +134,97 @@
 
     padButtons.forEach((button, k) => {
       const left = 9 - counts[k + 1];
-      button.querySelector('.left').textContent = left > 0 ? left : '';
-      button.disabled = left <= 0;
+      button.querySelector('.left').textContent = state.hasGame && left > 0 ? left : '';
+      button.disabled = !state.hasGame || left <= 0;
     });
 
-    $('undo').disabled = state.history.length === 0 || state.solved;
+    const playing = state.hasGame && !state.solved && !state.choosing;
+    $('undo').disabled = !playing || state.history.length === 0;
+    $('erase').disabled = !playing;
     $('notes').setAttribute('aria-pressed', String(state.notesMode));
     $('notes-state').textContent = state.notesMode ? 'On' : 'Off';
     $('pause').textContent = state.paused ? '▶' : '❚❚';
     $('pause').setAttribute('aria-label', state.paused ? 'Resume' : 'Pause');
-    $('pause').disabled = state.solved;
-    boardEl.classList.toggle('paused', state.paused);
+    $('pause').disabled = !playing;
+    $('difficulty-label').textContent = state.hasGame ? DIFFICULTIES[state.difficulty].label : '';
+    boardEl.classList.toggle('paused', state.paused || state.choosing);
     renderClock();
   }
 
-  function showOverlay(title, text, buttonLabel, onClick) {
+  /*
+   * Shows the overlay over the board. Each button is
+   * { label, onClick, className?, html? }.
+   */
+  function showOverlay(title, text, buttons, layout = '') {
     $('overlay-title').textContent = title;
     $('overlay-text').textContent = text;
-    const button = $('overlay-button');
-    button.textContent = buttonLabel;
-    button.onclick = onClick;
+    overlayButtonsEl.className = `overlay-buttons ${layout}`.trim();
+    overlayButtonsEl.replaceChildren(...buttons.map(({ label, html, onClick, className }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      if (html) button.innerHTML = html;
+      else button.textContent = label;
+      if (className) button.className = className;
+      button.addEventListener('click', onClick);
+      return button;
+    }));
     overlayEl.hidden = false;
   }
 
   const hideOverlay = () => { overlayEl.hidden = true; };
 
+  function showPausedOverlay() {
+    showOverlay('Paused', `Time: ${formatTime(elapsed())}`,
+      [{ label: 'Resume', className: 'primary', onClick: () => setPaused(false) }]);
+  }
+
+  // ---- Difficulty picker ---------------------------------------------------
+
+  function openChooser() {
+    if (state.choosing) return;
+    state.choosing = true;
+    syncClock();
+
+    const canReturn = state.hasGame && !state.solved;
+    const buttons = Object.entries(DIFFICULTIES).map(([key, { label }]) => {
+      const best = loadBest(key);
+      return {
+        className: 'level',
+        html: best ? `${label}<small>Best ${formatTime(best)}</small>` : label,
+        onClick: () => newGame(key),
+      };
+    });
+    if (canReturn) {
+      buttons.push({ label: 'Back to game', className: 'cancel', onClick: closeChooser });
+    }
+
+    showOverlay(
+      state.hasGame ? 'New game' : 'Welcome to Sudo-ku',
+      canReturn ? 'Choose a difficulty. Your current game will be lost.' : 'Choose a difficulty to start.',
+      buttons, 'levels');
+
+    // Focus the last-played level for keyboard users; skip on touch screens,
+    // where the focus ring would look like a selection.
+    if (matchMedia('(hover: hover)').matches) {
+      overlayButtonsEl.children[Object.keys(DIFFICULTIES).indexOf(state.difficulty)].focus();
+    }
+    render();
+  }
+
+  // Returns to the game in progress without starting a new one.
+  function closeChooser() {
+    if (!state.choosing || !state.hasGame || state.solved) return;
+    state.choosing = false;
+    if (state.paused) showPausedOverlay();
+    else hideOverlay();
+    syncClock();
+    render();
+  }
+
   // ---- Game actions --------------------------------------------------------
 
-  const canEdit = () => !state.solved && !state.paused && state.selected >= 0;
+  const canEdit = () =>
+    state.hasGame && !state.solved && !state.paused && !state.choosing && state.selected >= 0;
 
   function snapshot() {
     state.history.push({
@@ -168,7 +235,7 @@
   }
 
   function select(i) {
-    if (state.paused || state.solved) return;
+    if (!state.hasGame || state.paused || state.choosing || state.solved) return;
     state.selected = i;
     render();
   }
@@ -209,7 +276,7 @@
   }
 
   function undo() {
-    if (state.solved || state.paused || !state.history.length) return;
+    if (!state.hasGame || state.solved || state.paused || state.choosing || !state.history.length) return;
     const prev = state.history.pop();
     state.values = prev.values;
     state.notes = prev.notes;
@@ -231,9 +298,9 @@
 
   function checkSolved() {
     if (!state.values.every((v, i) => v === state.solution[i])) return;
-    stopClock();
     state.solved = true;
     state.selected = -1;
+    syncClock();
 
     const time = elapsed();
     const best = loadBest(state.difficulty);
@@ -244,27 +311,25 @@
     const detail = isRecord
       ? `${label} in ${formatTime(time)}: a new best time!`
       : `${label} in ${formatTime(time)}. Best: ${formatTime(best)}.`;
-    showOverlay('Solved!', detail, 'Play again', () => newGame(state.difficulty));
+    showOverlay('Solved!', detail, [
+      { label: `Play ${label} again`, className: 'primary', onClick: () => newGame(state.difficulty) },
+      { label: 'Change difficulty', onClick: openChooser },
+    ]);
   }
 
   function setPaused(paused) {
-    if (state.solved || paused === state.paused) return;
+    if (!state.hasGame || state.solved || state.choosing || paused === state.paused) return;
     state.paused = paused;
-    if (paused) {
-      stopClock();
-      showOverlay('Paused', `Time: ${formatTime(elapsed())}`, 'Resume', () => setPaused(false));
-    } else {
-      hideOverlay();
-      startClock();
-    }
+    syncClock();
+    if (paused) showPausedOverlay();
+    else hideOverlay();
     render();
   }
-
-  const inProgress = () => !state.solved && state.history.length > 0;
 
   function newGame(difficulty) {
     const game = Sudoku.generate(difficulty);
     Object.assign(state, {
+      hasGame: true,
       difficulty,
       puzzle: game.puzzle,
       solution: game.solution,
@@ -275,41 +340,37 @@
       elapsed: 0,
       startedAt: null,
       paused: false,
+      choosing: false,
       solved: false,
     });
-    difficultyEl.value = difficulty;
-    $('difficulty-label').textContent = DIFFICULTIES[difficulty].label;
     hideOverlay();
-    startClock();
+    syncClock();
     render();
-  }
-
-  function requestNewGame(difficulty) {
-    if (inProgress() && !confirm('Start a new game? Your current progress will be lost.')) {
-      difficultyEl.value = state.difficulty;
-      return;
-    }
-    newGame(difficulty);
   }
 
   // ---- Event wiring --------------------------------------------------------
 
-  $('new-game').addEventListener('click', () => requestNewGame(difficultyEl.value));
-  difficultyEl.addEventListener('change', () => requestNewGame(difficultyEl.value));
+  $('new-game').addEventListener('click', openChooser);
   $('undo').addEventListener('click', undo);
   $('erase').addEventListener('click', erase);
   $('notes').addEventListener('click', toggleNotesMode);
   $('pause').addEventListener('click', () => setPaused(!state.paused));
 
   document.addEventListener('keydown', e => {
-    if (e.target instanceof HTMLSelectElement) return;
+    if (e.key === 'Escape') {
+      if (state.choosing) closeChooser();
+      else select(-1);
+      return;
+    }
+    // Leave keys alone while the picker is open, so Tab/Enter work on its buttons.
+    if (state.choosing) return;
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       undo();
       return;
     }
-    if (e.ctrlKey || e.metaKey) return;
+    if (e.ctrlKey || e.metaKey || e.altKey && !/^(Digit|Numpad)/.test(e.code)) return;
 
     // e.code keeps Shift+1 as a digit (e.key would be "!").
     const m = /^(?:Digit|Numpad)([0-9])$/.exec(e.code) || /^([0-9])$/.exec(e.key);
@@ -322,16 +383,17 @@
     }
 
     const moves = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    const key = e.key.toLowerCase();
     if (moves[e.key]) {
       e.preventDefault();
       move(...moves[e.key]);
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       e.preventDefault();
       erase();
-    } else if (e.key === 'n' || e.key === 'N') {
+    } else if (key === 'n') {
       toggleNotesMode();
-    } else if (e.key === 'Escape') {
-      select(-1);
+    } else if (key === 'p') {
+      setPaused(!state.paused);
     }
   });
 
@@ -340,5 +402,6 @@
     if (document.hidden) setPaused(true);
   });
 
-  newGame(difficultyEl.value);
+  render();
+  openChooser();
 })();

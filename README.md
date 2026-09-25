@@ -10,7 +10,8 @@ from any static host such as GitHub Pages.
 
 ## Features
 
-- **Four difficulty levels.** Every puzzle is freshly generated and has
+- **Four difficulty levels.** You choose one when the page opens and each
+  time you press **New game**. Every puzzle is freshly generated and has
   exactly one solution. Each level is defined by the solving techniques it
   needs:
   - **Easy:** about 38 clues; naked and hidden singles are enough.
@@ -19,7 +20,9 @@ from any static host such as GitHub Pages.
     or naked/hidden pairs and triples.
   - **Expert:** minimal puzzles that need techniques beyond those.
 - **Clock** that counts the time spent on the game. It pauses when you press
-  pause or switch tabs, and remembers your best time for each difficulty.
+  the pause button or `P`, or switch tabs, and it doesn't run while the
+  difficulty picker is open. The board is hidden while paused. Your best time
+  for each difficulty is saved and shown in the difficulty picker.
 - **Notes mode** toggle to switch between filling in digits and adding
   pencil marks.
 - **Keyboard or on-screen number pad** input. The pad shows how many of each
@@ -37,8 +40,9 @@ from any static host such as GitHub Pages.
 | Arrow keys | Move the selection |
 | `Backspace`, `Delete`, `0` | Erase |
 | `N` | Toggle notes mode |
+| `P` | Pause or resume |
 | `Ctrl`/`Cmd` + `Z` | Undo |
-| `Esc` | Deselect |
+| `Esc` | Deselect, or close the difficulty picker and return to the game |
 
 ## Project layout
 
@@ -47,7 +51,7 @@ from any static host such as GitHub Pages.
 | `index.html` | Page markup |
 | `css/style.css` | Styles, including the mobile layout and dark theme |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
-| `js/app.js` | Game UI: rendering, input, notes, undo and timer |
+| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing and the difficulty picker |
 | `tests/` | Engine unit tests |
 | `docs/` | Knowledge base explaining how the generator works |
 

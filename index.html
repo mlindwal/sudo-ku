@@ -11,16 +11,7 @@
   <main class="app">
     <header class="topbar">
       <h1>Sudo-ku</h1>
-      <div class="controls">
-        <label class="visually-hidden" for="difficulty">Difficulty</label>
-        <select id="difficulty">
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-          <option value="expert">Expert</option>
-        </select>
-        <button id="new-game" type="button">New game</button>
-      </div>
+      <button id="new-game" type="button">New game</button>
     </header>
 
     <div class="status">
@@ -36,7 +27,7 @@
       <div id="overlay" class="overlay" hidden>
         <p id="overlay-title" class="overlay-title"></p>
         <p id="overlay-text"></p>
-        <button id="overlay-button" type="button"></button>
+        <div id="overlay-buttons" class="overlay-buttons"></div>
       </div>
     </div>
 
@@ -56,7 +47,7 @@
 
     <p class="help">
       Keyboard: <kbd>1</kbd>–<kbd>9</kbd> fill in, <kbd>Shift</kbd>+digit adds a note,
-      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes,
+      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>P</kbd> pauses,
       <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.
     </p>
   </main>
