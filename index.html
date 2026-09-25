@@ -17,6 +17,10 @@
   <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
   <meta name="theme-color" content="#2f5bd3">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sudo-ku">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -62,6 +66,10 @@
 
     <div id="pad" class="pad" aria-label="Number pad"></div>
 
+    <button id="install" type="button" class="install" hidden>
+      <span aria-hidden="true">📲</span> Install app
+    </button>
+
     <p class="help">
       Keyboard: <kbd>1</kbd>–<kbd>9</kbd> fill in, <kbd>Shift</kbd>+digit adds a note,
       arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>P</kbd> pauses, <kbd>M</kbd> mutes, <kbd>T</kbd> changes theme,
@@ -69,8 +77,20 @@
     </p>
   </main>
 
+  <dialog id="install-dialog" class="install-dialog" aria-labelledby="install-title">
+    <div class="dialog-body">
+      <h2 id="install-title">Install Sudo-ku</h2>
+      <p>Add Sudo-ku to your device to open it like an app. It works offline too.</p>
+      <ol id="install-steps"></ol>
+      <form method="dialog">
+        <button type="submit" class="primary">Got it</button>
+      </form>
+    </div>
+  </dialog>
+
   <script src="js/sudoku.js"></script>
   <script src="js/sound.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/pwa.js"></script>
 </body>
 </html>

@@ -8,6 +8,29 @@ step.
 Open `index.html` in a browser. It works straight from the file system, or
 from any static host such as GitHub Pages.
 
+### Install as an app and play offline
+
+When served over `https://` (for example from GitHub Pages), Sudo-ku is a
+progressive web app. It can be installed like an app and works without an
+internet connection once it has loaded once.
+
+- **Chrome, Edge and Samsung Internet** (Android and desktop): press
+  **Install app** below the number pad to open the browser's install prompt.
+- **Safari on iPhone and iPad:** Safari doesn't let pages show an install
+  prompt, so **Install app** shows how to do it: tap **Share**, then **Add to
+  Home Screen**.
+- **Safari on Mac:** **Install app** shows how to use **File → Add to Dock**.
+
+The button is hidden once the game is installed, and in browsers that can't
+install web apps, such as Firefox on desktop.
+
+On iPhone and iPad, the Home Screen app keeps its own storage, separate from
+Safari. A game saved in Safari won't appear in the installed app, and the
+reverse.
+
+Offline support doesn't work when `index.html` is opened directly from the
+file system, because browsers only run service workers over `http(s)`.
+
 ## Features
 
 - **Four difficulty levels.** You choose one when the page opens and each
@@ -71,10 +94,14 @@ from any static host such as GitHub Pages.
 |---|---|
 | `index.html` | Page markup |
 | `css/style.css` | Styles, including the mobile layout and dark theme |
-| `img/` | Favicon and logo (`favicon.svg`), plus PNG versions for older browsers and iOS home screens |
+| `img/` | Favicon and logo (`favicon.svg`), plus PNG app icons rendered from it |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
 | `js/sound.js` | Sound effects synthesized with the Web Audio API |
+| `js/pwa.js` | Registers the service worker and runs the **Install app** button |
 | `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker, saving the game and the theme switch |
+| `manifest.webmanifest` | Web app manifest: name, icons and colors for installing |
+| `sw.js` | Service worker that caches the game for offline play |
+| `scripts/render-icons.js` | Renders the PNG icons from `img/favicon.svg` (needs Playwright) |
 | `tests/` | Engine unit tests |
 | `docs/` | Knowledge base explaining how the generator works |
 
@@ -100,3 +127,10 @@ engine:
 
 The solver uses bitmasks and fills the most-constrained cell first
 ([docs](docs/06-performance.md)), so a puzzle generates in well under 50 ms.
+
+## Updating the offline version
+
+The service worker serves the cached game first and fetches updates in the
+background, so players get a new version on their next visit after it's
+published. If you add, remove or rename a file the game needs, add it to
+`FILES` in `sw.js` and increase `CACHE_VERSION`.

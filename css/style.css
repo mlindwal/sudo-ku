@@ -309,6 +309,42 @@ h1 {
 
 .pad .left { font-size: 0.65rem; color: var(--muted); }
 
+/* ---- Install button and dialog ---- */
+
+.install { align-self: center; font-size: 0.9rem; }
+.install[hidden] { display: none; }
+
+.install-dialog {
+  width: min(92vw, 400px);
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.3);
+}
+
+.install-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+
+.dialog-body { padding: 20px; }
+.dialog-body h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.dialog-body p { margin: 0 0 12px; color: var(--muted); }
+.dialog-body ol { margin: 0 0 16px; padding-left: 1.3em; line-height: 1.6; }
+.dialog-body li + li { margin-top: 6px; }
+.dialog-body form { display: flex; justify-content: flex-end; }
+.dialog-body .primary { background: var(--accent); color: var(--accent-text); }
+
+.step-icon {
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: -0.3em;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .help { margin: 0; font-size: 0.8rem; color: var(--muted); line-height: 1.8; }
 
 kbd {

@@ -544,6 +544,8 @@
   $('theme').addEventListener('click', cycleTheme);
 
   document.addEventListener('keydown', e => {
+    // Leave keys to an open dialog (e.g. the install instructions).
+    if (document.querySelector('dialog[open]')) return;
     if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 't') {
       cycleTheme();
       return;

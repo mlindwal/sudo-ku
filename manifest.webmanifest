@@ -1,0 +1,19 @@
+{
+  "name": "Sudo-ku",
+  "short_name": "Sudo-ku",
+  "description": "Sudoku with four difficulty levels, notes, a timer and sound effects. Works offline.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7fb",
+  "theme_color": "#2f5bd3",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "img/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
