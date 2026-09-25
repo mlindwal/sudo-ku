@@ -52,12 +52,26 @@
       </div>
     </div>
 
+    <section id="hint-panel" class="hint-panel" hidden aria-live="polite" aria-labelledby="hint-title">
+      <div class="hint-head">
+        <h2 id="hint-title"></h2>
+        <button id="hint-close" type="button" class="icon-button" aria-label="Close hint">✕</button>
+      </div>
+      <ol id="hint-steps"></ol>
+      <div class="hint-actions">
+        <button id="hint-apply" type="button" class="primary"></button>
+      </div>
+    </section>
+
     <div class="actions">
       <button id="undo" type="button" class="action">
         <span class="action-icon" aria-hidden="true">↶</span>Undo
       </button>
       <button id="erase" type="button" class="action">
         <span class="action-icon" aria-hidden="true">⌫</span>Erase
+      </button>
+      <button id="hint" type="button" class="action" aria-controls="hint-panel" aria-expanded="false">
+        <span class="action-icon" aria-hidden="true">💡</span>Hint
       </button>
       <button id="notes" type="button" class="action" aria-pressed="false">
         <span class="action-icon" aria-hidden="true">✎</span>Notes: <span id="notes-state">Off</span>
@@ -78,7 +92,7 @@
 
     <p class="help">
       Keyboard: <kbd>1</kbd>–<kbd>9</kbd> fill in, <kbd>Shift</kbd>+digit adds a note,
-      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>P</kbd> pauses, <kbd>M</kbd> mutes, <kbd>T</kbd> changes theme,
+      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>H</kbd> shows a hint, <kbd>P</kbd> pauses, <kbd>M</kbd> mutes, <kbd>T</kbd> changes theme,
       <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.
     </p>
   </main>

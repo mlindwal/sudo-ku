@@ -1,7 +1,7 @@
 /*
  * Sudoku game UI: board rendering, input (keyboard, mouse, touch),
- * notes mode, undo, timer, pausing, mistakes, sound, difficulty selection,
- * saving the game in progress, and the light/dark theme switch.
+ * notes mode, undo, hints, timer, pausing, mistakes, sound, difficulty
+ * selection, saving the game in progress, and the light/dark theme switch.
  */
 (function () {
   'use strict';
@@ -15,6 +15,7 @@
   const timerEl = $('timer');
   const overlayEl = $('overlay');
   const overlayButtonsEl = $('overlay-buttons');
+  const hintPanel = $('hint-panel');
 
   const state = {
     hasGame: false,    // false until the first difficulty is chosen
@@ -31,6 +32,8 @@
     paused: false,
     choosing: false,   // the difficulty picker is open
     mistakes: 0,       // wrong digits entered; never undone
+    hint: null,        // the hint on screen (see Sudoku.explainHint), or null
+    hintsUsed: 0,
     over: false,       // the game has ended, won or lost
   };
 
@@ -68,6 +71,7 @@
         values: state.values,
         notes: state.notes,
         mistakes: state.mistakes,
+        hintsUsed: state.hintsUsed,
         notesMode: state.notesMode,
         elapsed: elapsed(),
         history: state.history.slice(-MAX_SAVED_HISTORY),
@@ -97,7 +101,8 @@
 
     const history = (Array.isArray(saved.history) ? saved.history : []).filter(h =>
       h && isGrid(h.values, 9) && isGrid(h.notes, 0x1ff) && Number.isInteger(h.selected));
-    return { ...saved, history, notesMode: saved.notesMode === true };
+    const hintsUsed = Number.isInteger(saved.hintsUsed) && saved.hintsUsed >= 0 ? saved.hintsUsed : 0;
+    return { ...saved, history, hintsUsed, notesMode: saved.notesMode === true };
   }
 
   // Restores a saved game, paused, and asks whether to continue it.
@@ -117,6 +122,8 @@
       paused: true,
       choosing: false,
       mistakes: saved.mistakes,
+      hint: null,
+      hintsUsed: saved.hintsUsed,
       over: false,
     });
     const { label, maxMistakes } = DIFFICULTIES[saved.difficulty];
@@ -228,12 +235,19 @@
     const selValue = sel >= 0 ? state.values[sel] : 0;
     const peers = new Set(sel >= 0 ? PEERS[sel] : []);
     const counts = new Array(10).fill(0);
+    const hint = state.hint;
+    const hintArea = new Set(hint ? hint.steps.flatMap(step => step.area) : []);
+    const hintKey = new Set(hint ? hint.steps.flatMap(step => step.key) : []);
 
     for (let i = 0; i < 81; i++) {
       const v = state.values[i];
       const { el, value, notes } = cells[i];
       const wrong = v !== 0 && v !== state.solution[i];
       if (v && !wrong) counts[v]++;
+
+      el.classList.toggle('hint-area', hintArea.has(i));
+      el.classList.toggle('hint-key', hintKey.has(i));
+      el.classList.toggle('hint-target', Boolean(hint) && i === hint.cell);
 
       el.classList.toggle('given', state.puzzle[i] !== 0);
       el.classList.toggle('selected', i === sel);
@@ -262,6 +276,9 @@
 
     $('undo').disabled = !editable || state.history.length === 0;
     $('erase').disabled = !editable;
+    $('hint').disabled = !editable;
+    $('hint').setAttribute('aria-expanded', String(Boolean(hint)));
+    renderHint(editable);
     $('notes').setAttribute('aria-pressed', String(state.notesMode));
     $('notes-state').textContent = state.notesMode ? 'On' : 'Off';
     $('pause').textContent = state.paused ? '▶' : '❚❚';
@@ -280,6 +297,22 @@
     boardEl.classList.toggle('paused', state.paused || state.choosing);
     renderClock();
     saveGame();
+  }
+
+  // The hint panel below the board; hidden while the board is hidden.
+  function renderHint(editable) {
+    const { hint } = state;
+    hintPanel.hidden = !hint || !editable;
+    if (hintPanel.hidden) return;
+    $('hint-title').textContent = hint.title;
+    const steps = $('hint-steps');
+    steps.replaceChildren(...hint.steps.map(step => {
+      const li = document.createElement('li');
+      li.textContent = step.text;
+      return li;
+    }));
+    steps.classList.toggle('single-step', hint.steps.length === 1);
+    $('hint-apply').textContent = hint.type === 'wrong' ? 'Erase it' : `Fill in ${hint.digit}`;
   }
 
   /*
@@ -358,6 +391,7 @@
     state.hasGame && !state.over && !state.paused && !state.choosing && state.selected >= 0;
 
   function snapshot() {
+    state.hint = null;
     state.history.push({
       values: state.values.slice(),
       notes: state.notes.slice(),
@@ -372,13 +406,13 @@
   }
 
   // Fills in a digit, or toggles a note when notes mode is on (or asNote).
-  function enter(d, asNote) {
+  function enter(d, asNote, forceDigit = false) {
     if (!canEdit()) return;
     const i = state.selected;
     if (state.puzzle[i]) return;
     const bit = 1 << (d - 1);
 
-    if (asNote || state.notesMode) {
+    if (!forceDigit && (asNote || state.notesMode)) {
       if (state.values[i]) return;
       snapshot();
       state.notes[i] ^= bit;
@@ -429,6 +463,7 @@
     state.values = prev.values;
     state.notes = prev.notes;
     state.selected = prev.selected;
+    state.hint = null;
     render();
   }
 
@@ -451,6 +486,33 @@
 
   const maxMistakes = () => DIFFICULTIES[state.difficulty].maxMistakes;
 
+  // Shows a hint for the current board, or hides the one on screen.
+  function toggleHint() {
+    if (state.hint) return closeHint();
+    if (!state.hasGame || state.over || state.paused || state.choosing) return;
+    const hint = Sudoku.findHint(state.values, state.solution);
+    if (!hint) return;
+    state.hint = { ...Sudoku.explainHint(hint, state.values), type: hint.type };
+    state.hintsUsed++;
+    state.selected = -1;
+    render();
+    hintPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function closeHint() {
+    state.hint = null;
+    render();
+  }
+
+  // Carries out the hint: fills in its digit, or erases the wrong one.
+  function applyHint() {
+    const { hint } = state;
+    if (!hint) return;
+    state.selected = hint.cell;
+    if (hint.type === 'wrong') erase();
+    else enter(hint.digit, false, true);
+  }
+
   // Ends the game as won when every cell is correct. Returns whether it did.
   function checkSolved() {
     if (!state.values.every((v, i) => v === state.solution[i])) return false;
@@ -459,14 +521,19 @@
     syncClock();
 
     const time = elapsed();
-    const best = loadBest(state.difficulty);
-    const isRecord = !best || time < best;
-    if (isRecord) saveBest(state.difficulty, time);
-
     const label = DIFFICULTIES[state.difficulty].label;
-    const detail = isRecord
-      ? `${label} in ${formatTime(time)}: a new best time!`
-      : `${label} in ${formatTime(time)}. Best: ${formatTime(best)}.`;
+    const best = loadBest(state.difficulty);
+    let detail;
+    if (state.hintsUsed) {
+      // Games solved with hints don't count toward best times.
+      const hints = state.hintsUsed === 1 ? '1 hint' : `${state.hintsUsed} hints`;
+      detail = `${label} in ${formatTime(time)} with ${hints}. Games with hints don't count toward best times.`;
+    } else if (!best || time < best) {
+      saveBest(state.difficulty, time);
+      detail = `${label} in ${formatTime(time)}: a new best time!`;
+    } else {
+      detail = `${label} in ${formatTime(time)}. Best: ${formatTime(best)}.`;
+    }
     showOverlay('Solved!', detail, [
       { label: `Play ${label} again`, className: 'primary', onClick: () => newGame(state.difficulty) },
       { label: 'Change difficulty', onClick: openChooser },
@@ -526,6 +593,8 @@
       paused: false,
       choosing: false,
       mistakes: 0,
+      hint: null,
+      hintsUsed: 0,
       over: false,
     });
     hideOverlay();
@@ -541,6 +610,9 @@
   $('notes').addEventListener('click', toggleNotesMode);
   $('pause').addEventListener('click', () => setPaused(!state.paused));
   $('mute').addEventListener('click', toggleMute);
+  $('hint').addEventListener('click', toggleHint);
+  $('hint-close').addEventListener('click', closeHint);
+  $('hint-apply').addEventListener('click', applyHint);
   $('theme').addEventListener('click', cycleTheme);
 
   document.addEventListener('keydown', e => {
@@ -552,6 +624,7 @@
     }
     if (e.key === 'Escape') {
       if (state.choosing) closeChooser();
+      else if (state.hint) closeHint();
       else select(-1);
       return;
     }
@@ -587,6 +660,8 @@
       toggleNotesMode();
     } else if (key === 'p') {
       setPaused(!state.paused);
+    } else if (key === 'h') {
+      toggleHint();
     } else if (key === 'm') {
       toggleMute();
     }

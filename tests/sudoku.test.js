@@ -73,3 +73,79 @@ test('mistake limits: 5 for easy and medium, 3 for hard and expert', () => {
     Object.entries(Sudoku.DIFFICULTIES).map(([key, spec]) => [key, spec.maxMistakes]));
   assert.deepEqual(limits, { easy: 5, medium: 5, hard: 3, expert: 3 });
 });
+
+// ---- Hints ------------------------------------------------------------------
+
+const bit = d => 1 << (d - 1);
+
+function candidates(values) {
+  return values.map((v, i) => {
+    if (v) return 0;
+    let used = 0;
+    for (const p of Sudoku.PEERS[i]) if (values[p]) used |= bit(values[p]);
+    return ~used & 0x1ff;
+  });
+}
+
+// Replays a hint's own steps from the player's board: each step's reasoning
+// must hold given only the steps before it, and they must lead to the move.
+function checkHintStandsAlone(values, hint) {
+  const cand = candidates(values);
+  for (const step of hint.steps) {
+    const unit = Sudoku.UNITS[step.unit];
+    const mask = step.digits.reduce((m, d) => m | bit(d), 0);
+    const others = unit.filter(i => !step.pattern.includes(i));
+    if (step.technique.startsWith('Naked')) {
+      assert.ok(step.pattern.every(i => (cand[i] & ~mask) === 0), `${step.technique}: cells limited to its digits`);
+    } else {
+      assert.ok(others.every(i => (cand[i] & mask) === 0), `${step.technique}: digits absent elsewhere in unit`);
+    }
+    for (const { cell, mask: m } of step.removals) cand[cell] &= ~m;
+  }
+  const { single } = hint;
+  if (single.unit === null) {
+    assert.equal(cand[single.cell], bit(single.digit), 'naked single follows from the steps');
+  } else {
+    const spots = Sudoku.UNITS[single.unit].filter(i => cand[i] & bit(single.digit));
+    assert.deepEqual(spots, [single.cell], 'hidden single follows from the steps');
+  }
+}
+
+test('following hints solves puzzles of every level correctly', () => {
+  for (const difficulty of Object.keys(Sudoku.DIFFICULTIES)) {
+    for (let k = 0; k < 6; k++) {
+      const { puzzle, solution } = Sudoku.generate(difficulty);
+      const values = puzzle.slice();
+      for (let guard = 0; guard < 81; guard++) {
+        const hint = Sudoku.findHint(values, solution);
+        if (!hint) break;
+        assert.notEqual(hint.type, 'wrong');
+        assert.equal(values[hint.cell], 0, 'hint targets an empty cell');
+        assert.equal(hint.digit, solution[hint.cell], 'hint digit is correct');
+        if (hint.type === 'move') checkHintStandsAlone(values, hint);
+        const text = Sudoku.explainHint(hint, values);
+        assert.ok(text.steps.length > 0 && text.steps.every(s => s.text.length > 20));
+        values[hint.cell] = hint.digit;
+      }
+      assert.deepEqual(values, solution);
+    }
+  }
+});
+
+test('hints point out a wrong digit first', () => {
+  const puzzle = Sudoku.parse(PUZZLE), solution = Sudoku.parse(SOLUTION);
+  const values = puzzle.slice();
+  values[2] = 1; // row 1, column 3 should be 4
+  const hint = Sudoku.findHint(values, solution);
+  assert.deepEqual(hint, { type: 'wrong', cell: 2, digit: 1 });
+  assert.match(Sudoku.explainHint(hint, values).steps[0].text, /The 1 in row 1, column 3 is wrong/);
+});
+
+test('hint explanations name units and cells in plain words', () => {
+  const values = Sudoku.parse(PUZZLE), solution = Sudoku.parse(SOLUTION);
+  const hint = Sudoku.findHint(values, solution);
+  const text = Sudoku.explainHint(hint, values);
+  assert.equal(text.title, 'Hidden single');
+  assert.match(text.steps[0].text, /^In the (top|middle|bottom|center)[-a-z]* box, \d can only go in one place: row \d, column \d\./);
+  assert.equal(Sudoku.findHint(solution, solution), null, 'no hint for a solved board');
+});

@@ -88,6 +88,12 @@ The human-style solver is also what powers hints in the game. It can say
 "this cell must be 7 because it's the only place for 7 in this box" instead of
 just revealing the answer.
 
+The game does exactly this: each technique in `js/sudoku.js` finds and
+describes one step without applying it, so the grader applies the steps and
+`findHint` explains them. When a placement depends on eliminations, the hint
+keeps only the ones it needs, working backwards from the placement to the
+candidates each step relies on.
+
 ---
 Previous: [Removing clues](04-removing-clues.md) ·
 Next: [Performance](06-performance.md)

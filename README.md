@@ -54,6 +54,15 @@ file system, because browsers only run service workers over `http(s)`.
 - **Sound effects** for correct and wrong digits, and a jingle when you win
   or lose. They're synthesized in the browser, so there are no audio files.
   The mute button (or `M`) silences them, and the setting is remembered.
+- **Hints.** Press **Hint** (or `H`) for the next logical move, explained in
+  plain words, with the cells it involves highlighted. **Fill in** places the
+  digit. Hints start from the digits on the board (not your notes), use the
+  simplest technique that works (hidden and naked singles first, then
+  pointing pairs, box/line reduction, and naked and hidden pairs and
+  triples), and explain any steps a placement depends on. A wrong digit on the
+  board is pointed out first. When a move needs a technique beyond these
+  (sometimes on Expert), the hint simply gives a digit. Games solved with
+  hints don't count toward best times.
 - **Notes mode** toggle to switch between filling in digits and adding
   pencil marks.
 - **Keyboard or on-screen number pad** input. The pad shows how many of each
@@ -84,11 +93,12 @@ file system, because browsers only run service workers over `http(s)`.
 | Arrow keys | Move the selection |
 | `Backspace`, `Delete`, `0` | Erase |
 | `N` | Toggle notes mode |
+| `H` | Show or hide a hint |
 | `P` | Pause or resume |
 | `M` | Mute or unmute sounds |
 | `T` | Switch theme: Auto → Light → Dark |
 | `Ctrl`/`Cmd` + `Z` | Undo |
-| `Esc` | Deselect, or close the difficulty picker and return to the game |
+| `Esc` | Close a hint, deselect, or close the difficulty picker and return to the game |
 
 ## Project layout
 
@@ -97,10 +107,10 @@ file system, because browsers only run service workers over `http(s)`.
 | `index.html` | Page markup |
 | `css/style.css` | Styles, including the mobile layout and dark theme |
 | `img/` | Favicon and logo (`favicon.svg`), plus PNG app icons rendered from it |
-| `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
+| `js/sudoku.js` | Engine: solver, generator, difficulty grader and hints (no DOM code) |
 | `js/sound.js` | Sound effects synthesized with the Web Audio API |
 | `js/pwa.js` | Registers the service worker and runs the **Install app** button |
-| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker, saving the game and the theme switch |
+| `js/app.js` | Game UI: rendering, input, notes, undo, hints, timer, pausing, mistakes, the difficulty picker, saving the game and the theme switch |
 | `manifest.webmanifest` | Web app manifest: name, icons and colors for installing |
 | `sw.js` | Service worker that caches the game for offline play |
 | `scripts/render-icons.js` | Renders the PNG icons from `img/favicon.svg` (needs Playwright) |
