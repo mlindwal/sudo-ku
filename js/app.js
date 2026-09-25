@@ -1,7 +1,7 @@
 /*
  * Sudoku game UI: board rendering, input (keyboard, mouse, touch),
- * notes mode, undo, timer, pausing, mistakes, sound, difficulty selection
- * and saving the game in progress.
+ * notes mode, undo, timer, pausing, mistakes, sound, difficulty selection,
+ * saving the game in progress, and the light/dark theme switch.
  */
 (function () {
   'use strict';
@@ -127,6 +127,38 @@
       ]);
     render();
   }
+
+  // ---- Theme ---------------------------------------------------------------
+
+  // 'auto' follows the system setting; the CSS reads data-theme on <html>.
+  const THEME_KEY = 'sudo-ku.theme';
+  const THEMES = {
+    auto:  { icon: '🌓', label: 'follows system', next: 'light' },
+    light: { icon: '☀️', label: 'light', next: 'dark' },
+    dark:  { icon: '🌙', label: 'dark', next: 'auto' },
+  };
+
+  const currentTheme = () => document.documentElement.dataset.theme || 'auto';
+
+  function setTheme(theme) {
+    if (theme === 'auto') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = theme;
+    try {
+      if (theme === 'auto') localStorage.removeItem(THEME_KEY);
+      else localStorage.setItem(THEME_KEY, theme);
+    } catch { /* not remembered */ }
+    renderTheme();
+  }
+
+  function renderTheme() {
+    const { icon, label, next } = THEMES[currentTheme()];
+    const button = $('theme');
+    button.textContent = icon;
+    button.setAttribute('aria-label', `Theme: ${label}. Switch to ${THEMES[next].label}.`);
+    button.title = `Theme: ${label}`;
+  }
+
+  const cycleTheme = () => setTheme(THEMES[currentTheme()].next);
 
   // ---- Clock ---------------------------------------------------------------
 
@@ -509,8 +541,13 @@
   $('notes').addEventListener('click', toggleNotesMode);
   $('pause').addEventListener('click', () => setPaused(!state.paused));
   $('mute').addEventListener('click', toggleMute);
+  $('theme').addEventListener('click', cycleTheme);
 
   document.addEventListener('keydown', e => {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 't') {
+      cycleTheme();
+      return;
+    }
     if (e.key === 'Escape') {
       if (state.choosing) closeChooser();
       else select(-1);
@@ -564,6 +601,8 @@
   // Keep the saved time current while playing, and save on the way out.
   setInterval(() => { if (state.startedAt) saveGame(); }, 5000);
   addEventListener('pagehide', saveGame);
+
+  renderTheme();
 
   const saved = loadGame();
   if (saved) {

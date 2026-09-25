@@ -5,13 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Play Sudoku in the browser with difficulty levels, a timer, pencil notes and sound effects.">
   <title>Sudo-ku</title>
+  <script>
+    // Apply the saved theme before the page is drawn, to avoid a flash of the
+    // wrong colors. With no saved choice, the theme follows the system.
+    try {
+      const theme = localStorage.getItem('sudo-ku.theme');
+      if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+    } catch { /* storage unavailable: follow the system */ }
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <h1>Sudo-ku</h1>
-      <button id="new-game" type="button">New game</button>
+      <div class="topbar-buttons">
+        <button id="theme" type="button" aria-label="Theme: follows system">🌓</button>
+        <button id="new-game" type="button">New game</button>
+      </div>
     </header>
 
     <div class="status">
@@ -49,7 +60,7 @@
 
     <p class="help">
       Keyboard: <kbd>1</kbd>–<kbd>9</kbd> fill in, <kbd>Shift</kbd>+digit adds a note,
-      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>P</kbd> pauses, <kbd>M</kbd> mutes,
+      arrows move, <kbd>Backspace</kbd> erases, <kbd>N</kbd> toggles notes, <kbd>P</kbd> pauses, <kbd>M</kbd> mutes, <kbd>T</kbd> changes theme,
       <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes.
     </p>
   </main>

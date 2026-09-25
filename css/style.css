@@ -16,12 +16,19 @@
   --accent-text: #ffffff;
   --button: #e9ecf4;
 
+  color-scheme: light dark;
+
   --board: min(94vw, 480px, 62vh);
   --cell: calc(var(--board) / 9);
 }
 
+/*
+ * Dark palette. It applies when the system prefers dark and the player
+ * hasn't chosen light, or when the player has chosen dark. The chosen
+ * theme is set as data-theme on <html> (see the script in index.html).
+ */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #12141c;
     --surface: #1b1e29;
     --text: #e6e8ef;
@@ -37,8 +44,30 @@
     --conflict-bg: #4a2327;
     --accent: #5b82ef;
     --button: #262a38;
+    color-scheme: dark;
   }
 }
+
+:root[data-theme="dark"] {
+  --bg: #12141c;
+  --surface: #1b1e29;
+  --text: #e6e8ef;
+  --muted: #9aa1b2;
+  --line: #3a3f52;
+  --line-strong: #c9cedd;
+  --given: #e6e8ef;
+  --entered: #8fb0ff;
+  --peer: #232839;
+  --same: #2f3a5c;
+  --selected: #3c4f86;
+  --conflict: #ff7b7b;
+  --conflict-bg: #4a2327;
+  --accent: #5b82ef;
+  --button: #262a38;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 
@@ -86,6 +115,10 @@ button:disabled { opacity: 0.35; cursor: default; }
 }
 
 h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.02em; }
+
+.topbar-buttons { display: flex; align-items: center; gap: 8px; }
+
+#theme { font-size: 1.1rem; padding: 0.35em 0.6em; line-height: 1; }
 
 #new-game { background: var(--accent); color: var(--accent-text); }
 

@@ -44,7 +44,11 @@ from any static host such as GitHub Pages.
   where you left off, including notes, mistakes and the last 100 undo steps,
   or **New game** to start over. The clock doesn't count time spent away.
   The save is cleared when a game is won or lost.
-- Light and dark themes that follow your system setting.
+- **Light and dark themes.** By default the theme follows your system
+  setting. The theme button in the header (or `T`) cycles between
+  **Auto** 🌓 (follow the system), **Light** ☀️ and **Dark** 🌙. Your choice
+  is remembered and applied before the page is drawn, so it never flashes
+  the wrong colors.
 
 ### Keyboard shortcuts
 
@@ -57,6 +61,7 @@ from any static host such as GitHub Pages.
 | `N` | Toggle notes mode |
 | `P` | Pause or resume |
 | `M` | Mute or unmute sounds |
+| `T` | Switch theme: Auto → Light → Dark |
 | `Ctrl`/`Cmd` + `Z` | Undo |
 | `Esc` | Deselect, or close the difficulty picker and return to the game |
 
@@ -68,7 +73,7 @@ from any static host such as GitHub Pages.
 | `css/style.css` | Styles, including the mobile layout and dark theme |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
 | `js/sound.js` | Sound effects synthesized with the Web Audio API |
-| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker and saving the game |
+| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker, saving the game and the theme switch |
 | `tests/` | Engine unit tests |
 | `docs/` | Knowledge base explaining how the generator works |
 
