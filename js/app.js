@@ -305,10 +305,25 @@
     hintPanel.hidden = !hint || !editable;
     if (hintPanel.hidden) return;
     $('hint-title').textContent = hint.title;
+    // Long hints show their first steps and conclusion, with the rest folded.
     const steps = $('hint-steps');
-    steps.replaceChildren(...hint.steps.map(step => {
+    const all = hint.steps.map((step, k) => ({ step, number: k + 1 }));
+    const folded = !hint.expanded && all.length > 4;
+    const shown = folded ? [...all.slice(0, 2), null, all[all.length - 1]] : all;
+    steps.replaceChildren(...shown.map(entry => {
       const li = document.createElement('li');
-      li.textContent = step.text;
+      if (entry) {
+        li.value = entry.number;
+        li.textContent = entry.step.text;
+      } else {
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'hint-more';
+        more.textContent = `Show ${all.length - 3} more steps`;
+        more.addEventListener('click', () => { state.hint.expanded = true; render(); });
+        li.className = 'hint-more-item';
+        li.append(more);
+      }
       return li;
     }));
     steps.classList.toggle('single-step', hint.steps.length === 1);

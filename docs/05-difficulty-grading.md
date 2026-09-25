@@ -94,6 +94,13 @@ describes one step without applying it, so the grader applies the steps and
 keeps only the ones it needs, working backwards from the placement to the
 candidates each step relies on.
 
+Hints also know techniques beyond the ones that define the levels (fish,
+wings, single-digit chains, unique rectangles, XY-chains, and "what if"
+chains that follow singles to a contradiction). The grader doesn't use them,
+so adding techniques to hints never changes how puzzles are graded. Every
+step records the candidates its reasoning relies on, which lets the tests
+check that each hint's steps justify its move on their own.
+
 ---
 Previous: [Removing clues](04-removing-clues.md) ·
 Next: [Performance](06-performance.md)

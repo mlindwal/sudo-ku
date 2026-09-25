@@ -56,12 +56,18 @@ file system, because browsers only run service workers over `http(s)`.
   The mute button (or `M`) silences them, and the setting is remembered.
 - **Hints.** Press **Hint** (or `H`) for the next logical move, explained in
   plain words, with the cells it involves highlighted. **Fill in** places the
-  digit. Hints start from the digits on the board (not your notes), use the
-  simplest technique that works (hidden and naked singles first, then
-  pointing pairs, box/line reduction, and naked and hidden pairs and
-  triples), and explain any steps a placement depends on. A wrong digit on the
-  board is pointed out first. When a move needs a technique beyond these
-  (sometimes on Expert), the hint simply gives a digit. Games solved with
+  digit. Hints start from the digits on the board (not your notes) and use
+  the simplest technique that works:
+  - singles, pointing pairs, box/line reduction, and naked and hidden pairs
+    and triples (the techniques that define Easy to Hard);
+  - for Expert: X-Wing, Swordfish and Jellyfish, Skyscraper, 2-String Kite,
+    Turbot Fish, XY-Wing, XYZ-Wing, W-Wing, Unique Rectangle and XY-Chain;
+  - as a last resort, a "what if" chain: *suppose this cell were 7; then …
+    and column 6 would have nowhere left for a 3, so it can't be 7.*
+
+  A hint explains every step the move depends on, and only those. Long hints
+  show their first steps and conclusion, with the rest behind **Show more
+  steps**. A wrong digit on the board is pointed out first. Games solved with
   hints don't count toward best times.
 - **Notes mode** toggle to switch between filling in digits and adding
   pencil marks.

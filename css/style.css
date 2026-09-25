@@ -254,6 +254,8 @@ h1 {
 .hint-panel ol { margin: 6px 0 10px; padding-left: 1.3em; line-height: 1.5; }
 .hint-panel ol.single-step { padding-left: 0; list-style: none; }
 .hint-panel li + li { margin-top: 4px; }
+.hint-more-item { list-style: none; }
+.hint-more { padding: 0.3em 0.7em; font-size: 0.85rem; }
 .hint-actions { display: flex; justify-content: flex-end; }
 .hint-actions .primary { background: var(--accent); color: var(--accent-text); }
 
