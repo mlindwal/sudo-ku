@@ -1,6 +1,7 @@
 /*
  * Sudoku game UI: board rendering, input (keyboard, mouse, touch),
- * notes mode, undo, timer, pausing, mistakes, sound and difficulty selection.
+ * notes mode, undo, timer, pausing, mistakes, sound, difficulty selection
+ * and saving the game in progress.
  */
 (function () {
   'use strict';
@@ -43,6 +44,88 @@
   function saveBest(difficulty, ms) {
     try { localStorage.setItem(`sudo-ku.best.${difficulty}`, String(ms)); }
     catch { /* storage unavailable: best times just aren't kept */ }
+  }
+
+  // ---- Storage (game in progress) -----------------------------------------
+
+  const SAVE_KEY = 'sudo-ku.game';
+  const SAVE_VERSION = 1;
+  const MAX_SAVED_HISTORY = 100; // undo steps kept across reloads
+
+  // Stores the game in progress, or removes it once the game has ended.
+  function saveGame() {
+    if (!state.hasGame) return;
+    try {
+      if (state.over) {
+        localStorage.removeItem(SAVE_KEY);
+        return;
+      }
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        version: SAVE_VERSION,
+        difficulty: state.difficulty,
+        puzzle: state.puzzle,
+        solution: state.solution,
+        values: state.values,
+        notes: state.notes,
+        mistakes: state.mistakes,
+        notesMode: state.notesMode,
+        elapsed: elapsed(),
+        history: state.history.slice(-MAX_SAVED_HISTORY),
+      }));
+    } catch { /* storage full or unavailable: the game just isn't saved */ }
+  }
+
+  const isGrid = (a, max) =>
+    Array.isArray(a) && a.length === 81 && a.every(n => Number.isInteger(n) && n >= 0 && n <= max);
+
+  // Returns the saved game if there is a valid one, else null.
+  function loadGame() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SAVE_KEY)); }
+    catch { return null; }
+    if (!saved || saved.version !== SAVE_VERSION) return null;
+
+    const spec = DIFFICULTIES[saved.difficulty];
+    const { puzzle, solution, values, notes, mistakes, elapsed: time } = saved;
+    const valid = spec &&
+      isGrid(puzzle, 9) && isGrid(solution, 9) && isGrid(values, 9) && isGrid(notes, 0x1ff) &&
+      !solution.includes(0) &&
+      puzzle.every((v, i) => !v || (v === solution[i] && values[i] === v)) &&
+      Number.isInteger(mistakes) && mistakes >= 0 && mistakes < spec.maxMistakes &&
+      Number.isFinite(time) && time >= 0;
+    if (!valid) return null;
+
+    const history = (Array.isArray(saved.history) ? saved.history : []).filter(h =>
+      h && isGrid(h.values, 9) && isGrid(h.notes, 0x1ff) && Number.isInteger(h.selected));
+    return { ...saved, history, notesMode: saved.notesMode === true };
+  }
+
+  // Restores a saved game, paused, and asks whether to continue it.
+  function restoreGame(saved) {
+    Object.assign(state, {
+      hasGame: true,
+      difficulty: saved.difficulty,
+      puzzle: saved.puzzle,
+      solution: saved.solution,
+      values: saved.values,
+      notes: saved.notes,
+      selected: -1,
+      notesMode: saved.notesMode,
+      history: saved.history,
+      elapsed: saved.elapsed,
+      startedAt: null,
+      paused: true,
+      choosing: false,
+      mistakes: saved.mistakes,
+      over: false,
+    });
+    const { label, maxMistakes } = DIFFICULTIES[saved.difficulty];
+    showOverlay('Welcome back',
+      `${label} · ${formatTime(saved.elapsed)} · Mistakes ${saved.mistakes}/${maxMistakes}`, [
+        { label: 'Continue', className: 'primary', onClick: () => setPaused(false) },
+        { label: 'New game', onClick: openChooser },
+      ]);
+    render();
   }
 
   // ---- Clock ---------------------------------------------------------------
@@ -138,14 +221,15 @@
     }
 
     const playing = state.hasGame && !state.over && !state.choosing;
+    const editable = playing && !state.paused;
     padButtons.forEach((button, k) => {
       const left = 9 - counts[k + 1];
       button.querySelector('.left').textContent = state.hasGame && left > 0 ? left : '';
-      button.disabled = !playing || left <= 0;
+      button.disabled = !editable || left <= 0;
     });
 
-    $('undo').disabled = !playing || state.history.length === 0;
-    $('erase').disabled = !playing;
+    $('undo').disabled = !editable || state.history.length === 0;
+    $('erase').disabled = !editable;
     $('notes').setAttribute('aria-pressed', String(state.notesMode));
     $('notes-state').textContent = state.notesMode ? 'On' : 'Off';
     $('pause').textContent = state.paused ? '▶' : '❚❚';
@@ -163,6 +247,7 @@
     $('mute').setAttribute('aria-label', muted ? 'Unmute sounds' : 'Mute sounds');
     boardEl.classList.toggle('paused', state.paused || state.choosing);
     renderClock();
+    saveGame();
   }
 
   /*
@@ -470,9 +555,21 @@
 
   // Pause automatically when the tab is hidden so the clock stays fair.
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) setPaused(true);
+    if (document.hidden) {
+      setPaused(true);
+      saveGame();
+    }
   });
 
-  render();
-  openChooser();
+  // Keep the saved time current while playing, and save on the way out.
+  setInterval(() => { if (state.startedAt) saveGame(); }, 5000);
+  addEventListener('pagehide', saveGame);
+
+  const saved = loadGame();
+  if (saved) {
+    restoreGame(saved);
+  } else {
+    render();
+    openChooser();
+  }
 })();

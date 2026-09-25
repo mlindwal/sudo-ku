@@ -38,6 +38,12 @@ from any static host such as GitHub Pages.
 - Undo, erase (a wrong digit's notes come back when you erase it), and
   highlighting of the selected cell's row, column and box,
   of matching digits, and of conflicting digits.
+- **Your game is saved** in the browser (`localStorage`) as you play. If you
+  reload, close the tab, or come back later, a **Welcome back** screen shows
+  the difficulty, time and mistakes so far. Choose **Continue** to pick up
+  where you left off, including notes, mistakes and the last 100 undo steps,
+  or **New game** to start over. The clock doesn't count time spent away.
+  The save is cleared when a game is won or lost.
 - Light and dark themes that follow your system setting.
 
 ### Keyboard shortcuts
@@ -62,7 +68,7 @@ from any static host such as GitHub Pages.
 | `css/style.css` | Styles, including the mobile layout and dark theme |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
 | `js/sound.js` | Sound effects synthesized with the Web Audio API |
-| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes and the difficulty picker |
+| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker and saving the game |
 | `tests/` | Engine unit tests |
 | `docs/` | Knowledge base explaining how the generator works |
 
