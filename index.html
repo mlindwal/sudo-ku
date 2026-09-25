@@ -13,12 +13,16 @@
       if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
     } catch { /* storage unavailable: follow the system */ }
   </script>
+  <link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <meta name="theme-color" content="#2f5bd3">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="app">
     <header class="topbar">
-      <h1>Sudo-ku</h1>
+      <h1><img class="logo" src="img/favicon.svg" alt="" width="32" height="32">Sudo-ku</h1>
       <div class="topbar-buttons">
         <button id="theme" type="button" aria-label="Theme: follows system">🌓</button>
         <button id="new-game" type="button">New game</button>

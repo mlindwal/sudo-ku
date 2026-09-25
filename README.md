@@ -71,6 +71,7 @@ from any static host such as GitHub Pages.
 |---|---|
 | `index.html` | Page markup |
 | `css/style.css` | Styles, including the mobile layout and dark theme |
+| `img/` | Favicon and logo (`favicon.svg`), plus PNG versions for older browsers and iOS home screens |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
 | `js/sound.js` | Sound effects synthesized with the Web Audio API |
 | `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes, the difficulty picker, saving the game and the theme switch |

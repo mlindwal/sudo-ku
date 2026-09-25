@@ -114,7 +114,23 @@ button:disabled { opacity: 0.35; cursor: default; }
   flex-wrap: wrap;
 }
 
-h1 { margin: 0; font-size: 1.5rem; letter-spacing: 0.02em; }
+h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+}
+
+.logo { width: 1.3em; height: 1.3em; flex: none; }
+
+/* Keep the title and header buttons on one line on the narrowest phones. */
+@media (max-width: 359px) {
+  h1 { font-size: 1.25rem; }
+  .topbar-buttons { gap: 6px; }
+  .topbar-buttons button { padding: 0.45em 0.7em; }
+}
 
 .topbar-buttons { display: flex; align-items: center; gap: 8px; }
 
