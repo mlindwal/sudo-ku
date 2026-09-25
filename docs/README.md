@@ -11,6 +11,7 @@ is written. Read them in order: each page builds on the one before it.
 | 4 | [Removing clues](04-removing-clues.md) | Digging holes while keeping the solution unique |
 | 5 | [Difficulty grading](05-difficulty-grading.md) | Measuring and targeting how hard a puzzle is |
 | 6 | [Performance](06-performance.md) | Making the solver and generator fast |
+| 7 | [Solving techniques](07-solving-techniques.md) | Every technique the hints use, with real examples |
 | – | [Glossary](glossary.md) | Definitions of the terms used across these docs |
 
 ## The generator in one paragraph

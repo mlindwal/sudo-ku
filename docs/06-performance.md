@@ -92,4 +92,4 @@ avoiding visible freezes.
 
 ---
 Previous: [Difficulty grading](05-difficulty-grading.md) ·
-Back to [index](README.md)
+Next: [Solving techniques](07-solving-techniques.md)

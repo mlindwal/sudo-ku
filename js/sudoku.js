@@ -441,7 +441,8 @@
           const [a] = pairOf(cand[x] & ~bit(c)), [b] = pairOf(cand[y] & ~bit(c));
           yield step('XYZ-Wing', [c], [p, x, y], removals, onlyThese(cand, [p, x, y]),
             `${capital(cellName(p))} can only be ${list(pairOf(cand[p]), 'or')}. ` +
-            `${capital(cellName(x))} can only be ${a} or ${c}, and ${cellName(y)} can only be ${b} or ${c}. ` +
+            `${capital(cellName(x))} can only be ${list(pairOf(cand[x]), 'or')}, ` +
+            `and ${cellName(y)} can only be ${list(pairOf(cand[y]), 'or')}. ` +
             `If ${cellName(p)} is ${a}, ${cellName(x)} is ${c}; if it's ${b}, ${cellName(y)} is ${c}; ` +
             `otherwise it's ${c} itself. So ${c} can't go in ${cellList(removals.map(r => r.cell))}, ` +
             `which ${removals.length > 1 ? 'see' : 'sees'} all three.`);
@@ -785,7 +786,7 @@
   function cellsIn(u, cells) {
     if (u < 9) return `columns ${list(cells.map(i => COL[i] + 1))}`;
     if (u < 18) return `rows ${list(cells.map(i => ROW[i] + 1))}`;
-    return list(cells.map(cellName));
+    return cellList(cells);
   }
 
   function explainElimination(step) {

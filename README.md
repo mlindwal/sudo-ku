@@ -121,7 +121,7 @@ file system, because browsers only run service workers over `http(s)`.
 | `sw.js` | Service worker that caches the game for offline play |
 | `scripts/render-icons.js` | Renders the PNG icons from `img/favicon.svg` (needs Playwright) |
 | `tests/` | Engine unit tests |
-| `docs/` | Knowledge base explaining how the generator works |
+| `docs/` | Knowledge base: how the generator works, and every solving technique the hints use |
 
 ## Tests
 

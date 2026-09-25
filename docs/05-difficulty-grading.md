@@ -97,7 +97,9 @@ candidates each step relies on.
 Hints also know techniques beyond the ones that define the levels (fish,
 wings, single-digit chains, unique rectangles, XY-chains, and "what if"
 chains that follow singles to a contradiction). The grader doesn't use them,
-so adding techniques to hints never changes how puzzles are graded. Every
+so adding techniques to hints never changes how puzzles are graded.
+[Solving techniques](07-solving-techniques.md) explains each one with
+examples. Every
 step records the candidates its reasoning relies on, which lets the tests
 check that each hint's steps justify its move on their own.
 
