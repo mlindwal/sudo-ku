@@ -67,3 +67,9 @@ for (const difficulty of Object.keys(Sudoku.DIFFICULTIES)) {
 test('generate rejects unknown difficulties', () => {
   assert.throws(() => Sudoku.generate('impossible'));
 });
+
+test('mistake limits: 5 for easy and medium, 3 for hard and expert', () => {
+  const limits = Object.fromEntries(
+    Object.entries(Sudoku.DIFFICULTIES).map(([key, spec]) => [key, spec.maxMistakes]));
+  assert.deepEqual(limits, { easy: 5, medium: 5, hard: 3, expert: 3 });
+});

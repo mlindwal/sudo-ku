@@ -23,11 +23,20 @@ from any static host such as GitHub Pages.
   the pause button or `P`, or switch tabs, and it doesn't run while the
   difficulty picker is open. The board is hidden while paused. Your best time
   for each difficulty is saved and shown in the difficulty picker.
+- **Mistake limit.** Each digit you enter is checked against the solution.
+  A wrong digit turns red and counts as a mistake. Mistakes can't be undone.
+  You lose when you reach the limit: 5 mistakes on Easy and Medium, 3 on Hard
+  and Expert. You can then retry the same puzzle or start a new game. Notes
+  never count as mistakes.
+- **Sound effects** for correct and wrong digits, and a jingle when you win
+  or lose. They're synthesized in the browser, so there are no audio files.
+  The mute button (or `M`) silences them, and the setting is remembered.
 - **Notes mode** toggle to switch between filling in digits and adding
   pencil marks.
 - **Keyboard or on-screen number pad** input. The pad shows how many of each
-  digit are left.
-- Undo, erase, and highlighting of the selected cell's row, column and box,
+  digit are left to place correctly.
+- Undo, erase (a wrong digit's notes come back when you erase it), and
+  highlighting of the selected cell's row, column and box,
   of matching digits, and of conflicting digits.
 - Light and dark themes that follow your system setting.
 
@@ -41,6 +50,7 @@ from any static host such as GitHub Pages.
 | `Backspace`, `Delete`, `0` | Erase |
 | `N` | Toggle notes mode |
 | `P` | Pause or resume |
+| `M` | Mute or unmute sounds |
 | `Ctrl`/`Cmd` + `Z` | Undo |
 | `Esc` | Deselect, or close the difficulty picker and return to the game |
 
@@ -51,7 +61,8 @@ from any static host such as GitHub Pages.
 | `index.html` | Page markup |
 | `css/style.css` | Styles, including the mobile layout and dark theme |
 | `js/sudoku.js` | Engine: solver, generator and difficulty grader (no DOM code) |
-| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing and the difficulty picker |
+| `js/sound.js` | Sound effects synthesized with the Web Audio API |
+| `js/app.js` | Game UI: rendering, input, notes, undo, timer, pausing, mistakes and the difficulty picker |
 | `tests/` | Engine unit tests |
 | `docs/` | Knowledge base explaining how the generator works |
 

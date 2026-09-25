@@ -251,14 +251,15 @@
   // ---- Generator -----------------------------------------------------------
 
   /*
-   * Each difficulty sets how far to dig and which solving techniques the
-   * puzzle may need (see docs/05-difficulty-grading.md).
+   * Each difficulty sets how far to dig, which solving techniques the
+   * puzzle may need (see docs/05-difficulty-grading.md), and how many
+   * wrong digits the player may enter before losing.
    */
   const DIFFICULTIES = {
-    easy:   { label: 'Easy',   targetClues: 38, accept: r => r.solved && r.hardest <= LEVEL.SINGLES },
-    medium: { label: 'Medium', targetClues: 31, accept: r => r.solved && r.hardest <= LEVEL.SINGLES },
-    hard:   { label: 'Hard',   targetClues: 0,  accept: r => r.solved && r.hardest >= LEVEL.LOCKED },
-    expert: { label: 'Expert', targetClues: 0,  accept: r => !r.solved },
+    easy:   { label: 'Easy',   maxMistakes: 5, targetClues: 38, accept: r => r.solved && r.hardest <= LEVEL.SINGLES },
+    medium: { label: 'Medium', maxMistakes: 5, targetClues: 31, accept: r => r.solved && r.hardest <= LEVEL.SINGLES },
+    hard:   { label: 'Hard',   maxMistakes: 3, targetClues: 0,  accept: r => r.solved && r.hardest >= LEVEL.LOCKED },
+    expert: { label: 'Expert', maxMistakes: 3, targetClues: 0,  accept: r => !r.solved },
   };
 
   // Removes clues in random order, keeping the solution unique.

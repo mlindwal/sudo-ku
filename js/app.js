@@ -1,11 +1,12 @@
 /*
  * Sudoku game UI: board rendering, input (keyboard, mouse, touch),
- * notes mode, undo, timer, pausing and difficulty selection.
+ * notes mode, undo, timer, pausing, mistakes, sound and difficulty selection.
  */
 (function () {
   'use strict';
 
   const { PEERS, ROW, COL, DIFFICULTIES } = Sudoku;
+  const Sound = SudokuSound;
 
   const $ = id => document.getElementById(id);
   const boardEl = $('board');
@@ -28,7 +29,8 @@
     startedAt: null,   // timestamp while the clock runs, else null
     paused: false,
     choosing: false,   // the difficulty picker is open
-    solved: false,
+    mistakes: 0,       // wrong digits entered; never undone
+    over: false,       // the game has ended, won or lost
   };
 
   // ---- Storage (best times) -----------------------------------------------
@@ -49,7 +51,7 @@
 
   // The clock runs only while a game is actually being played.
   function syncClock() {
-    const running = state.hasGame && !state.paused && !state.choosing && !state.solved;
+    const running = state.hasGame && !state.paused && !state.choosing && !state.over;
     if (running && !state.startedAt) {
       state.startedAt = Date.now();
     } else if (!running && state.startedAt) {
@@ -89,6 +91,7 @@
     cell.append(value, notes);
 
     cell.addEventListener('click', () => select(i));
+    cell.addEventListener('animationend', () => cell.classList.remove('shake'));
     boardEl.appendChild(cell);
     cells.push({ el: cell, value, notes: [...notes.children] });
   }
@@ -114,13 +117,15 @@
     for (let i = 0; i < 81; i++) {
       const v = state.values[i];
       const { el, value, notes } = cells[i];
-      counts[v]++;
+      const wrong = v !== 0 && v !== state.solution[i];
+      if (v && !wrong) counts[v]++;
 
       el.classList.toggle('given', state.puzzle[i] !== 0);
       el.classList.toggle('selected', i === sel);
       el.classList.toggle('peer', peers.has(i));
       el.classList.toggle('same', v !== 0 && v === selValue && i !== sel);
       el.classList.toggle('conflict', v !== 0 && PEERS[i].some(p => state.values[p] === v));
+      el.classList.toggle('wrong', wrong);
 
       value.textContent = v || '';
       for (let d = 1; d <= 9; d++) {
@@ -129,16 +134,16 @@
         notes[d - 1].classList.toggle('match', Boolean(on) && d === selValue);
       }
       el.setAttribute('aria-label',
-        `Row ${ROW[i] + 1}, column ${COL[i] + 1}, ${v ? v : 'empty'}${state.puzzle[i] ? ' (given)' : ''}`);
+        `Row ${ROW[i] + 1}, column ${COL[i] + 1}, ${v ? v : 'empty'}${state.puzzle[i] ? ' (given)' : ''}${wrong ? ' (wrong)' : ''}`);
     }
 
+    const playing = state.hasGame && !state.over && !state.choosing;
     padButtons.forEach((button, k) => {
       const left = 9 - counts[k + 1];
       button.querySelector('.left').textContent = state.hasGame && left > 0 ? left : '';
-      button.disabled = !state.hasGame || left <= 0;
+      button.disabled = !playing || left <= 0;
     });
 
-    const playing = state.hasGame && !state.solved && !state.choosing;
     $('undo').disabled = !playing || state.history.length === 0;
     $('erase').disabled = !playing;
     $('notes').setAttribute('aria-pressed', String(state.notesMode));
@@ -147,6 +152,15 @@
     $('pause').setAttribute('aria-label', state.paused ? 'Resume' : 'Pause');
     $('pause').disabled = !playing;
     $('difficulty-label').textContent = state.hasGame ? DIFFICULTIES[state.difficulty].label : '';
+    const max = maxMistakes();
+    $('mistakes').hidden = !state.hasGame;
+    $('mistakes-count').textContent = `${state.mistakes}/${max}`;
+    $('mistakes').classList.toggle('last-chance', state.hasGame && state.mistakes === max - 1);
+    $('mistakes').setAttribute('aria-label', `Mistakes: ${state.mistakes} of ${max}`);
+    const muted = Sound.isMuted();
+    $('mute').textContent = muted ? '🔇' : '🔊';
+    $('mute').setAttribute('aria-pressed', String(muted));
+    $('mute').setAttribute('aria-label', muted ? 'Unmute sounds' : 'Mute sounds');
     boardEl.classList.toggle('paused', state.paused || state.choosing);
     renderClock();
   }
@@ -185,7 +199,7 @@
     state.choosing = true;
     syncClock();
 
-    const canReturn = state.hasGame && !state.solved;
+    const canReturn = state.hasGame && !state.over;
     const buttons = Object.entries(DIFFICULTIES).map(([key, { label }]) => {
       const best = loadBest(key);
       return {
@@ -213,7 +227,7 @@
 
   // Returns to the game in progress without starting a new one.
   function closeChooser() {
-    if (!state.choosing || !state.hasGame || state.solved) return;
+    if (!state.choosing || !state.hasGame || state.over) return;
     state.choosing = false;
     if (state.paused) showPausedOverlay();
     else hideOverlay();
@@ -224,7 +238,7 @@
   // ---- Game actions --------------------------------------------------------
 
   const canEdit = () =>
-    state.hasGame && !state.solved && !state.paused && !state.choosing && state.selected >= 0;
+    state.hasGame && !state.over && !state.paused && !state.choosing && state.selected >= 0;
 
   function snapshot() {
     state.history.push({
@@ -235,7 +249,7 @@
   }
 
   function select(i) {
-    if (!state.hasGame || state.paused || state.choosing || state.solved) return;
+    if (!state.hasGame || state.paused || state.choosing || state.over) return;
     state.selected = i;
     render();
   }
@@ -255,14 +269,30 @@
       snapshot();
       if (state.values[i] === d) {
         state.values[i] = 0;
-      } else {
+      } else if (d === state.solution[i]) {
         state.values[i] = d;
         state.notes[i] = 0;
         for (const p of PEERS[i]) state.notes[p] &= ~bit;
+        if (!checkSolved()) Sound.play('correct');
+      } else {
+        // Keep the cell's notes so erasing the wrong digit brings them back.
+        state.values[i] = d;
+        state.mistakes++;
+        if (!checkLost()) Sound.play('wrong');
+        render();
+        shake(i);
+        return;
       }
-      checkSolved();
     }
     render();
+  }
+
+  // Briefly shakes a cell to signal a wrong digit.
+  function shake(i) {
+    const el = cells[i].el;
+    el.classList.remove('shake');
+    void el.offsetWidth; // restart the animation if it is already running
+    el.classList.add('shake');
   }
 
   function erase() {
@@ -270,17 +300,23 @@
     const i = state.selected;
     if (state.puzzle[i] || (!state.values[i] && !state.notes[i])) return;
     snapshot();
-    state.values[i] = 0;
-    state.notes[i] = 0;
+    // Erasing a digit reveals any notes kept under it; erasing again clears them.
+    if (state.values[i]) state.values[i] = 0;
+    else state.notes[i] = 0;
     render();
   }
 
   function undo() {
-    if (!state.hasGame || state.solved || state.paused || state.choosing || !state.history.length) return;
+    if (!state.hasGame || state.over || state.paused || state.choosing || !state.history.length) return;
     const prev = state.history.pop();
     state.values = prev.values;
     state.notes = prev.notes;
     state.selected = prev.selected;
+    render();
+  }
+
+  function toggleMute() {
+    Sound.setMuted(!Sound.isMuted());
     render();
   }
 
@@ -296,9 +332,12 @@
     select(r * 9 + c);
   }
 
+  const maxMistakes = () => DIFFICULTIES[state.difficulty].maxMistakes;
+
+  // Ends the game as won when every cell is correct. Returns whether it did.
   function checkSolved() {
-    if (!state.values.every((v, i) => v === state.solution[i])) return;
-    state.solved = true;
+    if (!state.values.every((v, i) => v === state.solution[i])) return false;
+    state.over = true;
     state.selected = -1;
     syncClock();
 
@@ -315,10 +354,29 @@
       { label: `Play ${label} again`, className: 'primary', onClick: () => newGame(state.difficulty) },
       { label: 'Change difficulty', onClick: openChooser },
     ]);
+    Sound.play('win');
+    return true;
+  }
+
+  // Ends the game as lost when the mistake limit is reached. Returns whether it did.
+  function checkLost() {
+    const max = maxMistakes();
+    if (state.mistakes < max) return false;
+    state.over = true;
+    state.selected = -1;
+    syncClock();
+
+    const label = DIFFICULTIES[state.difficulty].label;
+    showOverlay('Game over', `You made ${max} mistakes on ${label}.`, [
+      { label: 'Retry this puzzle', className: 'primary', onClick: restartPuzzle },
+      { label: 'New game', onClick: openChooser },
+    ]);
+    Sound.play('lose');
+    return true;
   }
 
   function setPaused(paused) {
-    if (!state.hasGame || state.solved || state.choosing || paused === state.paused) return;
+    if (!state.hasGame || state.over || state.choosing || paused === state.paused) return;
     state.paused = paused;
     syncClock();
     if (paused) showPausedOverlay();
@@ -328,12 +386,21 @@
 
   function newGame(difficulty) {
     const game = Sudoku.generate(difficulty);
+    startGame(difficulty, game.puzzle, game.solution);
+  }
+
+  // Plays the current puzzle again from the start.
+  function restartPuzzle() {
+    startGame(state.difficulty, state.puzzle, state.solution);
+  }
+
+  function startGame(difficulty, puzzle, solution) {
     Object.assign(state, {
       hasGame: true,
       difficulty,
-      puzzle: game.puzzle,
-      solution: game.solution,
-      values: game.puzzle.slice(),
+      puzzle,
+      solution,
+      values: puzzle.slice(),
       notes: new Array(81).fill(0),
       selected: -1,
       history: [],
@@ -341,7 +408,8 @@
       startedAt: null,
       paused: false,
       choosing: false,
-      solved: false,
+      mistakes: 0,
+      over: false,
     });
     hideOverlay();
     syncClock();
@@ -355,6 +423,7 @@
   $('erase').addEventListener('click', erase);
   $('notes').addEventListener('click', toggleNotesMode);
   $('pause').addEventListener('click', () => setPaused(!state.paused));
+  $('mute').addEventListener('click', toggleMute);
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -394,6 +463,8 @@
       toggleNotesMode();
     } else if (key === 'p') {
       setPaused(!state.paused);
+    } else if (key === 'm') {
+      toggleMute();
     }
   });
 
