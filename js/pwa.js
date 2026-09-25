@@ -12,7 +12,15 @@
   // Service workers need http(s); opening index.html as a file skips this.
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => { /* offline support unavailable */ });
+      navigator.serviceWorker.register('sw.js')
+        .then(registration => {
+          // Look for a new version whenever the game comes back to the
+          // foreground, e.g. an installed app that stayed open in the background.
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) registration.update().catch(() => {});
+          });
+        })
+        .catch(() => { /* offline support unavailable */ });
     });
   }
 
@@ -29,8 +37,8 @@
   const isInstalled = () =>
     matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
-  const SHARE_ICON = `<svg class="step-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>`;
-  const ADD_ICON = `<svg class="step-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>`;
+  const SHARE_ICON = `<svg class="step-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>`;
+  const ADD_ICON = `<svg class="step-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8.5v7M8.5 12h7"/></svg>`;
 
   const INSTRUCTIONS = {
     ios: [

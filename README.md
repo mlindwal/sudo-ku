@@ -132,7 +132,8 @@ The solver uses bitmasks and fills the most-constrained cell first
 
 ## Updating the offline version
 
-The service worker serves the cached game first and fetches updates in the
-background, so players get a new version on their next visit after it's
-published. If you add, remove or rename a file the game needs, add it to
+While online, the service worker always loads the game from the server
+(checking with it for changes), so players get a new version as soon as it's
+published. The cached copy is used only when there's no connection or the
+server doesn't answer within 4 seconds. If you add, remove or rename a file the game needs, add it to
 `FILES` in `sw.js` and increase `CACHE_VERSION`.

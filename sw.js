@@ -1,14 +1,20 @@
 /*
  * Service worker: makes the game work offline.
  *
- * All game files are cached on install. Requests are answered from the
- * cache straight away, and the cache is refreshed from the network in the
- * background, so an update shows up on the next visit after it's published.
+ * All game files are cached on install. While online, every request goes to
+ * the network first and is revalidated with the server (cache: 'no-cache'),
+ * and is served with "Cache-Control: no-cache" (see withNoCache), so the
+ * page, styles and scripts always come from the same deployment. The
+ * cached copies are used only when the network fails or is too slow.
+ *
+ * (Serving from the cache first and refreshing in the background mixed files
+ * from different deployments, e.g. new HTML with old CSS, after an update.)
  *
  * Bump CACHE_VERSION when adding, removing or renaming files in FILES.
  */
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE = `sudo-ku-v${CACHE_VERSION}`;
+const NETWORK_TIMEOUT_MS = 4000;
 
 const FILES = [
   './',
@@ -45,24 +51,43 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET' || new URL(request.url).origin !== location.origin) return;
-
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE);
-    // Page loads (e.g. "./?source=pwa") are all served by the cached index.html.
-    const key = request.mode === 'navigate' ? 'index.html' : request;
-    const cached = await cache.match(key, { ignoreSearch: true });
-
-    const refresh = fetch(request)
-      .then(response => {
-        if (response.ok) cache.put(key, response.clone());
-        return response;
-      })
-      .catch(() => null);
-
-    if (cached) {
-      event.waitUntil(refresh);
-      return cached;
-    }
-    return (await refresh) || Response.error();
-  })());
+  event.respondWith(networkFirst(request));
 });
+
+/*
+ * The server lets browsers reuse files for a while (GitHub Pages sends
+ * max-age=600). Chrome's in-memory cache honours that for files the service
+ * worker returns, skipping the worker on the next load, so an old stylesheet
+ * could be reused with a new page. "no-cache" makes every load come back here.
+ */
+function withNoCache(response) {
+  const headers = new Headers(response.headers);
+  headers.set('Cache-Control', 'no-cache');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE);
+  // Page loads (e.g. "./?source=pwa") are all stored as index.html.
+  const key = request.mode === 'navigate' ? 'index.html' : request;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), NETWORK_TIMEOUT_MS);
+  try {
+    // A new Request is needed: navigation requests can't take other options.
+    const response = await fetch(request.url, {
+      cache: 'no-cache',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    });
+    if (!response.ok) return response;
+    const fresh = withNoCache(response);
+    await cache.put(key, fresh.clone());
+    return fresh;
+  } catch {
+    const cached = await cache.match(key, { ignoreSearch: true });
+    return cached || Response.error();
+  } finally {
+    clearTimeout(timer);
+  }
+}
