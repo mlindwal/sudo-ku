@@ -311,8 +311,32 @@ h1 {
 
 /* ---- Install button and dialog ---- */
 
-.install { align-self: center; font-size: 0.9rem; }
-.install[hidden] { display: none; }
+.links { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+
+.link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.9em;
+  border-radius: 8px;
+  background: var(--button);
+  color: var(--text);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.link-button[hidden] { display: none; }
+a.link-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.link-icon {
+  width: 1.1em;
+  height: 1.1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .install-dialog {
   width: min(92vw, 400px);

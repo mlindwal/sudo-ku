@@ -72,6 +72,8 @@ file system, because browsers only run service workers over `http(s)`.
   **Auto** 🌓 (follow the system), **Light** ☀️ and **Dark** 🌙. Your choice
   is remembered and applied before the page is drawn, so it never flashes
   the wrong colors.
+- A **Source code** button under the number pad opens this repository in a
+  new tab.
 
 ### Keyboard shortcuts
 
